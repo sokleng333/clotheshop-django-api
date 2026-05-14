@@ -11,6 +11,27 @@ import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { FaEye } from "react-icons/fa";
 
+const DEFAULT_SIZES = ["S", "M", "L", "XL"];
+
+const getCategoryName = (category) => {
+  if (typeof category === "string") return category;
+  return category?.name || "";
+};
+
+const getProductSizes = (sizes) => {
+  if (!Array.isArray(sizes) || sizes.length === 0) return DEFAULT_SIZES;
+  return sizes.map((size) => (typeof size === "string" ? size : size.size)).filter(Boolean);
+};
+
+const normalizeProduct = (product) => ({
+  ...product,
+  name: product.name || product.title || "Product",
+  title: product.title || product.name || "Product",
+  category: getCategoryName(product.category) || "uncategorized",
+  sizes: getProductSizes(product.sizes),
+  rating: typeof product.rating === "object" ? product.rating?.rate || 4.5 : product.rating || 4.5,
+});
+
 const Men = () => {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -57,34 +78,42 @@ const Men = () => {
   }, []);
 
   useEffect(() => {
-    // Fetch from local JSON instead of API
-    fetch("/data/products.json")
-      .then((res) => res.json())
-      .then((json) => {
-        const menProducts = json.products
-          .filter((product) => product.category === "men's clothing")
-          .map((product) => ({
-            ...product,
-            // ✅ ADD SIZES DATA
-            sizes: product.sizes || ["S", "M", "L", "XL"],
-          }));
+    const applyProducts = (products) => {
+      const menProducts = products
+        .map(normalizeProduct)
+        .filter(
+  (product) =>
+    getCategoryName(product.category)
+      .trim()
+      .toLowerCase() === "men"
+);
 
-        setData(menProducts);
-        setFilteredData(menProducts);
+      setData(menProducts);
+      setFilteredData(menProducts);
 
-        // ✅ INITIALIZE DEFAULT SIZES
-        const initialSizes = {};
-        menProducts.forEach((product) => {
-          initialSizes[product.id] = product.sizes[0];
-        });
-        setSelectedSizes(initialSizes);
-
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.log(err);
-        setLoading(false);
+      const initialSizes = {};
+      menProducts.forEach((product) => {
+        initialSizes[product.id] = product.sizes[0] || "M";
       });
+      setSelectedSizes(initialSizes);
+    };
+
+    const loadProducts = async () => {
+      try {
+        const apiRes = await fetch("http://127.0.0.1:8000/api/products/");
+        if (!apiRes.ok) throw new Error("API request failed");
+        const apiJson = await apiRes.json();
+        applyProducts(Array.isArray(apiJson) ? apiJson : apiJson.products || []);
+      } catch (err) {
+        const localRes = await fetch("/data/products.json");
+        const localJson = await localRes.json();
+        applyProducts(localJson.products || []);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
   }, []);
 
   // ✅ ADD SIZE DROPDOWN TOGGLE HANDLER
@@ -117,7 +146,7 @@ const Men = () => {
       price: product.price,
       image: product.image,
       category: product.category,
-      size: selectedSizes[product.id], // ✅ ADD SELECTED SIZE
+      size: selectedSizes[product.id] || "M",
     });
   };
 
@@ -129,8 +158,8 @@ const Men = () => {
     if (searchTerm) {
       results = results.filter(
         (item) =>
-          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchTerm.toLowerCase())
+          item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -400,7 +429,7 @@ const Men = () => {
                         CLOTHING SHOP
                       </span>
       
-                      <style jsx>{`
+                      <style>{`
                         .wave-text {
                           background: linear-gradient(
                             90deg,
@@ -531,7 +560,7 @@ const Men = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="flex flex-col md:flex-row justify-between items-center">
                     <div className="text-gray-400 mb-4 md:mb-0">
-                      © 2024 CLOTHING SHOP. All rights reserved. Crafted with <i class="fa-solid fa-heart text-red-600"></i> for
+                      © 2024 CLOTHING SHOP. All rights reserved. Crafted with <i className="fa-solid fa-heart text-red-600"></i> for
                       fashion lovers
                     </div>
                     <div className="flex gap-8 text-gray-400">

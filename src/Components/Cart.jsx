@@ -136,112 +136,97 @@ const Cart = () => {
 
   const continueShopping = () => navigate("/all-collections");
 
-  const proceedToCheckout = () => {
-    Swal.fire({
-      title: "Select Payment Method",
-      html: `
-        <div style="text-align: left;">
-          <div style="margin-bottom: 1rem; padding: 1rem; background: linear-gradient(to right, #dbeafe, #f3e8ff); border-radius: 1rem; border: 1px solid #bfdbfe;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <p style="font-size: 1.125rem; font-weight: bold; color: #1f2937;">$${getTotal().toFixed(
-                  2
-                )}</p>
-                <p style="font-size: 0.875rem; color: #6b7280;">${getCartItemsCount()} items</p>
-              </div>
-              <div style="width: 2.5rem; height: 2.5rem; background-color: #10b981; border-radius: 9999px; display: flex; align-items: center; justify-content: center;">
-                <svg style="width: 1.25rem; height: 1.25rem; color: white;" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-          
-          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <div class="payment-option group" data-method="aba">
-              <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 1rem; border: 2px solid #e5e7eb; cursor: pointer; transition: all 0.3s;">
-                <img src="https://i.pinimg.com/1200x/e2/33/f5/e233f5b0c5a358449398f202b03f063a.jpg" alt="ABA Bank" style="width: 3rem; height: 3rem; border-radius: 0.75rem; object-fit: contain; background-color: white; padding: 0.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"/>
-                <div style="flex: 1;">
-                  <div style="font-weight: 600; color: #1f2937;">ABA PayWay</div>
-                  <div style="font-size: 0.875rem; color: #6b7280;">Instant bank transfer</div>
-                </div>
-                <input type="radio" name="payment" value="aba" style="width: 1.25rem; height: 1.25rem; color: #2563eb;" checked>
-              </div>
-            </div>
-
-            <div class="payment-option group" data-method="acleda">
-              <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 1rem; border: 2px solid #e5e7eb; cursor: pointer; transition: all 0.3s;">
-              <img src="https://i.pinimg.com/736x/8e/3a/11/8e3a117e5f1a302aba60c1f6f3e3c64e.jpg" alt="ACLEDA Bank" style="width: 3rem; height: 3rem; border-radius: 0.75rem; object-fit: contain; background-color: white; padding: 0.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"/>
-                <div style="flex: 1;">
-                  <div style="font-weight: 600; color: #1f2937;">ACLEDA Bank</div>
-                  <div style="font-size: 0.875rem; color: #6b7280;">Bank transfer</div>
-                </div>
-                <input type="radio" name="payment" value="acleda" style="width: 1.25rem; height: 1.25rem; color: #2563eb;">
-              </div>
-            </div>
-
-            <div class="payment-option group" data-method="wing">
-              <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 1rem; border: 2px solid #e5e7eb; cursor: pointer; transition: all 0.3s;">
-                <img src="https://i.pinimg.com/736x/82/a2/eb/82a2eb0b52db2151ff259ad54be6301d.jpg" alt="Wing" style="width: 3rem; height: 3rem; border-radius: 0.75rem; object-fit: contain; background-color: white; padding: 0.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"/>
-                <div style="flex: 1;">
-                  <div style="font-weight: 600; color: #1f2937;">Wing</div>
-                  <div style="font-size: 0.875rem; color: #6b7280;">Mobile payment</div>
-                </div>
-                <input type="radio" name="payment" value="wing" style="width: 1.25rem; height: 1.25rem; color: #2563eb;">
-              </div>
-            </div>
-          </div>
-        </div>
-      `,
-      width: 500,
-      showCancelButton: true,
-      confirmButtonText: "Continue to Pay",
-      cancelButtonText: "Cancel",
-      confirmButtonColor: "#2563eb",
-      cancelButtonColor: "#6b7280",
-      customClass: {
-        popup: "rounded-3xl",
-        confirmButton: "px-8 py-3 rounded-xl font-semibold shadow-lg",
-        cancelButton: "px-8 py-3 rounded-xl font-semibold",
-      },
-      didOpen: () => {
-        const paymentOptions = document.querySelectorAll(".payment-option");
-        paymentOptions.forEach((option) => {
-          option.addEventListener("click", function () {
-            const radio = this.querySelector('input[type="radio"]');
-            radio.checked = true;
-
-            paymentOptions.forEach((opt) => {
-              const div = opt.querySelector("div");
-              div.style.borderColor = "#e5e7eb";
-              div.style.background = "transparent";
-            });
-
-            const selectedDiv = this.querySelector("div");
-            selectedDiv.style.borderColor = "#3b82f6";
-            selectedDiv.style.background = "#f0f9ff";
-          });
+  const proceedToCheckout = async () => {
+    // Check if user is logged in
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        Swal.fire({
+            title: 'Login Required',
+            text: 'Please login to proceed to checkout',
+            icon: 'warning',
+            confirmButtonText: 'Login',
+            confirmButtonColor: '#2563eb',
+            showCancelButton: true,
+            cancelButtonText: 'Cancel',
+        }).then((result) => {
+            if (result.isConfirmed) navigate('/login');
         });
+        return;
+    }
 
-        if (paymentOptions[0]) {
-          const firstDiv = paymentOptions[0].querySelector("div");
-          firstDiv.style.borderColor = "#3b82f6";
-          firstDiv.style.background = "#f0f9ff";
+    Swal.fire({
+        title: "Select Payment Method",
+        html: `...`, // keep your existing html
+        // ... keep all your existing Swal options
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            const selectedPayment = document.querySelector('input[name="payment"]:checked').value;
+
+            // ✅ Step 1 - Send cart to Django checkout
+            try {
+                // First add all cart items to Django cart
+                for (const item of cartItems) {
+                    await fetch('http://127.0.0.1:8000/api/cart/add/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            product_id: item.id,
+                            size: item.size,
+                            quantity: item.quantity
+                        })
+                    });
+                }
+
+                // ✅ Step 2 - Checkout (creates order)
+                const checkoutRes = await fetch('http://127.0.0.1:8000/api/checkout/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const checkoutData = await checkoutRes.json();
+
+                if (!checkoutRes.ok) {
+                    Swal.fire('Error', checkoutData.error || 'Checkout failed', 'error');
+                    return;
+                }
+
+                const orderId = checkoutData.order_id;
+
+                // ✅ Step 3 - Create payment
+                const paymentRes = await fetch('http://127.0.0.1:8000/api/payment/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        order_id: orderId,
+                        method: selectedPayment
+                    })
+                });
+
+                const paymentData = await paymentRes.json();
+                const paymentId = paymentData.payment_id;
+
+                // ✅ Store for later confirmation
+                localStorage.setItem('pending_payment_id', paymentId);
+                localStorage.setItem('pending_order_id', orderId);
+
+                // Show bank payment UI
+                showBankPayment(selectedPayment);
+
+            } catch (err) {
+                Swal.fire('Error', 'Cannot connect to server', 'error');
+            }
         }
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        const selectedPayment = document.querySelector(
-          'input[name="payment"]:checked'
-        ).value;
-        if (selectedPayment === "credit") {
-          processCardPayment();
-        } else {
-          showBankPayment(selectedPayment);
-        }
-      }
     });
-  };
+};
 
   const showBankPayment = (bankType) => {
     const bank = bankAccounts[bankType];
@@ -300,36 +285,44 @@ const Cart = () => {
     });
   };
 
-  const verifyPayment = (bankType) => {
+ const verifyPayment = async (bankType) => {
     Swal.fire({
-      title: "Processing Payment",
-      html: `
-      <div style="text-align: center;">
-        <div style="margin-bottom: 1.5rem;">
-          <div style="width: 6rem; height: 6rem; margin: 0 auto; background: linear-gradient(to right, #3b82f6, #8b5cf6); border-radius: 9999px; display: flex; align-items: center; justify-content: center;">
-            <svg style="width: 3rem; height: 3rem; color: white; animation: spin 1s linear infinite;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2a10 10 0 100 20 10 10 0 000-20z"/>
-            </svg>
-          </div>
-        </div>
-        <p style="font-size: 1.25rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">Verifying Your Payment</p>
-        <p style="color: #6b7280;">Please wait while we confirm your transaction</p>
-        <div style="margin-top: 1rem; background-color: #fef3c7; border: 1px solid #fcd34d; border-radius: 0.75rem; padding: 1rem;">
-          <p style="font-size: 0.875rem; color: #92400e;">This usually takes a few moments...</p>
-        </div>
-      </div>
-    `,
-      showConfirmButton: false,
-      allowOutsideClick: false,
-      timer: 2500, // 2.5 seconds
-      timerProgressBar: true,
-      didOpen: () => {
-        Swal.showLoading();
-      },
-    }).then(() => {
-      showPaymentSuccess(bankType);
+        title: "Processing Payment",
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        timer: 2500,
+        timerProgressBar: true,
+        didOpen: () => Swal.showLoading(),
+    }).then(async () => {
+        const token = localStorage.getItem('access_token');
+        const paymentId = localStorage.getItem('pending_payment_id');
+
+        try {
+            // ✅ Confirm payment in Django
+            const confirmRes = await fetch('http://127.0.0.1:8000/api/payment/confirm/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ payment_id: paymentId })
+            });
+
+            const confirmData = await confirmRes.json();
+
+            if (confirmRes.ok) {
+                // Clear pending
+                localStorage.removeItem('pending_payment_id');
+                localStorage.removeItem('pending_order_id');
+                showPaymentSuccess(bankType);
+            } else {
+                Swal.fire('Error', confirmData.error || 'Payment failed', 'error');
+            }
+        } catch (err) {
+            Swal.fire('Error', 'Cannot connect to server', 'error');
+        }
     });
-  };
+};
 
   const showPaymentSuccess = (paymentMethod) => {
     const methodName =

@@ -13,13 +13,48 @@ const Navbar = () => {
   const { getCartItemsCount } = useCart();
   const { getWishlistItemsCount } = useWishlist();
 
+  //  ADDED USER STATE AND EFFECT TO LOAD USER FROM LOCAL STORAGE
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const loadUser = () => {
+      const userData = localStorage.getItem("user");
+
+      if (!userData) {
+        setUser(null);
+        return;
+      }
+
+      try {
+        setUser(JSON.parse(userData));
+      } catch {
+        localStorage.removeItem("user");
+        setUser(null);
+      }
+    };
+
+    loadUser();
+    window.addEventListener("storage", loadUser);
+
+    return () => window.removeEventListener("storage", loadUser);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user");
+    setUser(null);
+    window.dispatchEvent(new Event("storage"));
+    navigate("/login");
+  };
+
   // Auto-search when search term changes and we're on all-collections page
   useEffect(() => {
     if (location.pathname === "/all-collections" && searchTerm.trim()) {
       const timer = setTimeout(() => {
         navigate(
           `/all-collections?search=${encodeURIComponent(searchTerm.trim())}`,
-          { replace: true }
+          { replace: true },
         );
       }, 500);
 
@@ -31,7 +66,7 @@ const Navbar = () => {
     e.preventDefault();
     if (searchTerm.trim()) {
       navigate(
-        `/all-collections?search=${encodeURIComponent(searchTerm.trim())}`
+        `/all-collections?search=${encodeURIComponent(searchTerm.trim())}`,
       );
       setSearchTerm("");
       setIsSearchOpen(false);
@@ -100,54 +135,63 @@ const Navbar = () => {
         </div>
 
         {/* ✅ Middle: Search Bar - Centered on desktop */}
-        <div className=" hidden lg:block absolute left-180 transform -translate-x-1/2">
-          <form onSubmit={handleSearchSubmit} className="relative group">
-            {/* <div className="absolute inset-y-0 left-0pl-3 flex items-center pointer-events-none">
-          <svg
-            className="w-4 h-4 2xl:w-5 2xl:h-5 text-gray-400 group-hover:text-amber-500 transition-colors duration-300"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24" 
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        </div>   */}
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className=" w-48 lg:w-56 xl:w-45 2xl:w-72 bg-white backdrop-blur-sm rounded-xl pl-8 2xl:pl-12 pr-8 py-2 2xl:py-3 text-sm 2xl:text-base border border-gray-200/80 outline-none transition-all duration-300 focus:bg-white focus:ring-2 focus:ring-amber-500/20 placeholder-gray-500"
-            />
-            <i class="fa-solid fa-magnifying-glass absolute left-2 top-5 transform -translate-y-1/2 text-gray-500"></i>
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm("")}
-                className="absolute right-8 2xl:right-10 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-amber-500 transition-colors duration-300"
-              >
-                <svg
-                  className="w-3 h-3 2xl:w-4 2xl:h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            )}
-          </form>
-        </div>
+        {/* Search Bar */}
+<div className="hidden lg:flex flex-1 justify-center px-6">
+  <form
+    onSubmit={handleSearchSubmit}
+    className="relative w-full max-w-md"
+  >
+    {/* Search Icon */}
+    <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+
+    <input
+      type="text"
+      placeholder="Search products..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className="
+        w-full
+        bg-white
+        border border-gray-200
+        rounded-full
+        pl-11
+        pr-10
+        py-2.5
+        text-sm
+        outline-none
+        transition-all
+        duration-300
+        focus:ring-2
+        focus:ring-amber-400
+        focus:border-amber-400
+        shadow-sm
+      "
+    />
+
+    {/* Clear Button */}
+    {searchTerm && (
+      <button
+        type="button"
+        onClick={() => setSearchTerm("")}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black"
+      >
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    )}
+  </form>
+</div>
 
         {/* ✅ Right: Actions */}
         <div className="flex items-center space-x-4 2xl:space-x-6">
@@ -237,22 +281,37 @@ const Navbar = () => {
             </NavLink>
           </div>
 
-          {/* Login Button - Show on desktop (lg) and above */}
+         
+          {/* Login/User Button - Show on desktop (lg) and above */}
           <div className="hidden lg:flex items-center">
-            <NavLink
-              to="/login"
-              className={({ isActive }) =>
-                `px-4 py-2 2xl:px-6 2xl:py-3 rounded-xl font-medium text-sm 2xl:text-base transition-all duration-300 relative overflow-hidden group shadow-lg
-              ${
-                isActive
-                  ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xl scale-105"
-                  : "bg-gradient-to-r from-amber-400 to-amber-500 text-white hover:from-amber-500 hover:to-amber-600 hover:shadow-xl hover:scale-105 active:scale-95"
-              }`
-              }
-            >
-              <span className="relative z-10">Login</span>
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
-            </NavLink>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <span className="text-white font-medium text-sm">
+                  Hi, {user.first_name || user.username}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 rounded-xl font-medium text-sm bg-red-500 text-white hover:bg-red-600 transition-all duration-300"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <NavLink
+                to="/login"
+                className={({ isActive }) =>
+                  `px-4 py-2 2xl:px-6 2xl:py-3 rounded-xl font-medium text-sm 2xl:text-base transition-all duration-300 relative overflow-hidden group shadow-lg
+                ${
+                  isActive
+                    ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xl scale-105"
+                    : "bg-gradient-to-r from-amber-400 to-amber-500 text-white hover:from-amber-500 hover:to-amber-600 hover:shadow-xl hover:scale-105 active:scale-95"
+                }`
+                }
+              >
+                <span className="relative z-10">Login</span>
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
+              </NavLink>
+            )}
           </div>
 
           {/* Mobile Menu Button - Show on tablet and below */}
@@ -305,7 +364,7 @@ const Navbar = () => {
               placeholder="Search products..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-gray-50 rounded-xl pl-10 pr-12 py-3 text-sm border border-gray-200 outline-none focus:bg-white focus:border-amber-300 focus:ring-2 focus:ring-amber-100"
+              className="w-full bg-gray-50 rounded-xl pl-10 pr-12 py-3 text-sm border border-gray-200 outline-none  focus:bg-white focus:border-amber-300 focus:ring-2 focus:ring-amber-100"
               autoFocus
             />
             {searchTerm && (
@@ -380,13 +439,23 @@ const Navbar = () => {
               >
                 Contact
               </NavLink>
-              <NavLink
-                to="/login"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="block px-4 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-white font-medium text-center text-sm hover:from-amber-500 hover:to-amber-600 transition-all duration-300"
-              >
-                Login
-              </NavLink>
+             
+              {user ? (
+                <button
+                  onClick={handleLogout}
+                  className="block w-full px-4 py-3 rounded-xl bg-red-500 text-white font-medium text-center text-sm hover:bg-red-600 transition-all duration-300"
+                >
+                  Logout
+                </button>
+              ) : (
+                <NavLink
+                  to="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-4 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-white font-medium text-center text-sm hover:from-amber-500 hover:to-amber-600 transition-all duration-300"
+                >
+                  Login
+                </NavLink>
+              )}
             </div>
           </div>
         </div>
@@ -413,7 +482,7 @@ const Navbar = () => {
           ))}
         </div>
       </div>
-      <style jsx>{`
+      <style>{`
         .wave-text {
           background: linear-gradient(
             90deg,

@@ -9,7 +9,7 @@ const Register = () => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    email: "",
+    username: "",
     password: "",
     confirmPassword: "",
     agreeToTerms: false
@@ -102,41 +102,124 @@ const Register = () => {
       return;
     }
 
-    setIsLoading(true);
+//  fetch api here  
+setIsLoading(true);
+
+setIsLoading(true);
+
+try {
+    // Step 1 - Register
+    const res = await fetch('http://127.0.0.1:8000/api/register/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            username: formData.username,
+            password: formData.password,
+            confirm_password: formData.confirmPassword
+        })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        // Step 2 - Auto Login
+        const loginRes = await fetch('http://127.0.0.1:8000/api/token/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: formData.username,
+                password: formData.password
+            })
+        });
+
+        const loginData = await loginRes.json();
+        localStorage.setItem('access_token', loginData.access);
+        localStorage.setItem('refresh_token', loginData.refresh);
+
+        // Step 3 - Fetch Profile
+        const profileRes = await fetch('http://127.0.0.1:8000/api/profile/', {
+            headers: { 'Authorization': `Bearer ${loginData.access}` }
+        });
+        const userData = await profileRes.json();
+        localStorage.setItem('user', JSON.stringify(userData));
+        window.dispatchEvent(new Event('storage'));
+
+        // Step 4 - Show Success ✅ only one if block
+        Swal.fire({
+            title: 'Welcome to Our Community!',
+            html: `
+                <div class="text-center">
+                    <p class="text-gray-700 mb-2">Account created for <strong>${formData.firstName}</strong>!</p>
+                    <p class="text-sm text-gray-600">Welcome to our fashion family!</p>
+                </div>
+            `,
+            icon: 'success',
+            confirmButtonText: 'Start Shopping',
+            confirmButtonColor: '#8B5CF6',
+            preConfirm: () => {
+                navigate('/');
+            }
+        });
+
+    } else {
+        // ❌ Register failed
+        Swal.fire({
+            title: 'Register Failed',
+            text: JSON.stringify(data),
+            icon: 'error',
+            confirmButtonColor: '#EC4899',
+        });
+    }
+
+} catch (err) {
+    Swal.fire({
+        title: 'Error',
+        text: 'Cannot connect to server',
+        icon: 'error',
+        confirmButtonColor: '#EC4899',
+    });
+}
+
+setIsLoading(false);
+
+setIsLoading(false);
     
     // Simulate API call
-    setTimeout(() => {
-      Swal.fire({
-        title: 'Welcome to Our Community!',
-        html: `
-          <div class="text-center">
-            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-            </div>
-            <p class="text-gray-700 mb-2">Account created successfully for <strong>${formData.firstName}</strong>!</p>
-            <p class="text-sm text-gray-600">Welcome to our fashion family!</p>
-          </div>
-        `,
-        icon: 'success',
-        confirmButtonText: 'Start Shopping',
-        confirmButtonColor: '#8B5CF6',
-        background: '#fff',
-        color: '#374151',
-        customClass: {
-          popup: 'rounded-2xl shadow-2xl',
-          title: 'text-2xl font-bold text-gray-900',
-          confirmButton: 'px-6 py-3 rounded-xl font-semibold'
-        },
-        preConfirm: () => {
-          // Navigate to shop page when button is clicked
-          navigate('/');
-        }
-      });
-      setIsLoading(false);
-    }, 2000);
-  };
+  //   setTimeout(() => {
+  //     Swal.fire({
+  //       title: 'Welcome to Our Community!',
+  //       html: `
+  //         <div class="text-center">
+  //           <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+  //             <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  //               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+  //             </svg>
+  //           </div>
+  //           <p class="text-gray-700 mb-2">Account created successfully for <strong>${formData.firstName}</strong>!</p>
+  //           <p class="text-sm text-gray-600">Welcome to our fashion family!</p>
+  //         </div>
+  //       `,
+  //       icon: 'success',
+  //       confirmButtonText: 'Start Shopping',
+  //       confirmButtonColor: '#8B5CF6',
+  //       background: '#fff',
+  //       color: '#374151',
+  //       customClass: {
+  //         popup: 'rounded-2xl shadow-2xl',
+  //         title: 'text-2xl font-bold text-gray-900',
+  //         confirmButton: 'px-6 py-3 rounded-xl font-semibold'
+  //       },
+  //       preConfirm: () => {
+  //         // Navigate to shop page when button is clicked
+  //         navigate('/');
+  //       }
+  //     });
+  //     setIsLoading(false);
+  //   }, 2000);
+  // };
+}
 
   const handleSocialRegister = (provider) => {
     Swal.fire({
@@ -284,18 +367,18 @@ const Register = () => {
 
             {/* Email Field */}
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email Address
+              <label htmlFor="username" className="text-sm font-medium text-gray-700">
+                Username
               </label>
               <div className="relative">
-                <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="Enter your email"
+                  type="text"
+                  id="username"
+                  name="username"
+                  placeholder="Enter your username"
                   onChange={handleChange}
-                  value={formData.email}
+                  value={formData.username}
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300"
                   required
                 />

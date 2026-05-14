@@ -12,17 +12,17 @@ const About = () => {
 
   const values = [
     {
-      icon: <i class="fa-solid fa-bullseye"></i>,
+      icon: <i className="fa-solid fa-bullseye"></i>,
       title: "Our Mission",
       description: "To provide authentic Khmer fashion that celebrates Cambodian heritage while embracing modern style and comfort."
     },
     {
-      icon: <i class="fa-solid fa-eye"></i>,
+      icon: <i className="fa-solid fa-eye"></i>,
       title: "Our Vision",
       description: "To become the leading platform for Khmer fashion worldwide, connecting people with Cambodian culture through clothing."
     },
     {
-      heart: <i class="fa-solid fa-heart"></i>,
+      heart: <i className="fa-solid fa-heart"></i>,
       title: "Our Values",
       description: "Quality craftsmanship, cultural preservation, customer satisfaction, and sustainable practices guide everything we do."
     }

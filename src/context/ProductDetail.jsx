@@ -75,7 +75,7 @@ const ProductDetail = () => {
     for (let i = 0; i < quantity; i++) {
       addToCart({
         id: product.id,
-        name: product.title,
+        name: product.name || product.title,
         price: product.price,
         image: product.image,
         category: product.category,

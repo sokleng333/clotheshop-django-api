@@ -119,7 +119,7 @@ const Wishlist = () => {
               Aww ..Snap. You haven't added any store yet!
             </h2>
             <p className="text-gray-600 mb-8">
-              Tap on <i class="fa-solid fa-heart text-red-600"></i> icon to add store to your Favorite list
+              Tap on <i className="fa-solid fa-heart text-red-600"></i> icon to add store to your Favorite list
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

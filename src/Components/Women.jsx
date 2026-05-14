@@ -11,6 +11,27 @@ import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { FaEye } from "react-icons/fa";
 
+const DEFAULT_SIZES = ["S", "M", "L", "XL"];
+
+const getCategoryName = (category) => {
+  if (typeof category === "string") return category;
+  return category?.name || "";
+};
+
+const getProductSizes = (sizes) => {
+  if (!Array.isArray(sizes) || sizes.length === 0) return DEFAULT_SIZES;
+  return sizes.map((size) => (typeof size === "string" ? size : size.size)).filter(Boolean);
+};
+
+const normalizeProduct = (product) => ({
+  ...product,
+  name: product.name || product.title || "Product",
+  title: product.title || product.name || "Product",
+  category: getCategoryName(product.category) || "uncategorized",
+  sizes: getProductSizes(product.sizes),
+  rating: typeof product.rating === "object" ? product.rating?.rate || 4.5 : product.rating || 4.5,
+});
+
 const Women = () => {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -59,16 +80,14 @@ const Women = () => {
 
   useEffect(() => {
     // Fetch from local JSON instead of API
-    fetch("/data/products.json")
+    fetch("http://127.0.0.1:8000/api/products/")
       .then((res) => res.json())
       .then((json) => {
-        const womenProducts = json.products
-          .filter((product) => product.category === "women's clothing")
+        const womenProducts = json
+          .filter((product) => getCategoryName(product.category).toLowerCase().includes("women"))
           .map((product) => ({
-            ...product,
-            // ✅ ADD SIZES DATA FOR WOMEN
-            sizes: product.sizes || ["S", "M", "L", "XL"],
-          }));
+                    ...normalizeProduct(product),
+                }));
 
         setData(womenProducts);
         setFilteredData(womenProducts);
@@ -76,7 +95,7 @@ const Women = () => {
         // ✅ INITIALIZE DEFAULT SIZES
         const initialSizes = {};
         womenProducts.forEach((product) => {
-          initialSizes[product.id] = product.sizes[0];
+          initialSizes[product.id] = product.sizes[0] || "M";
         });
         setSelectedSizes(initialSizes);
 
@@ -84,7 +103,23 @@ const Women = () => {
       })
       .catch((err) => {
         console.log(err);
-        setLoading(false);
+        fetch("/data/products.json")
+          .then((res) => res.json())
+          .then((json) => {
+            const womenProducts = (json.products || [])
+              .map(normalizeProduct)
+              .filter((product) => getCategoryName(product.category).toLowerCase().includes("women"));
+
+            setData(womenProducts);
+            setFilteredData(womenProducts);
+
+            const initialSizes = {};
+            womenProducts.forEach((product) => {
+              initialSizes[product.id] = product.sizes[0] || "M";
+            });
+            setSelectedSizes(initialSizes);
+          })
+          .finally(() => setLoading(false));
       });
   }, []);
 
@@ -118,7 +153,7 @@ const Women = () => {
       price: product.price,
       image: product.image,
       category: product.category,
-      size: selectedSizes[product.id], // ✅ ADD SELECTED SIZE
+      size: selectedSizes[product.id] || "M",
     });
   };
 
@@ -130,8 +165,8 @@ const Women = () => {
     if (searchTerm) {
       results = results.filter(
         (item) =>
-          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchTerm.toLowerCase())
+          item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -425,7 +460,7 @@ const Women = () => {
                         CLOTHING SHOP
                       </span>
       
-                      <style jsx>{`
+                      <style>{`
                         .wave-text {
                           background: linear-gradient(
                             90deg,
@@ -556,7 +591,7 @@ const Women = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="flex flex-col md:flex-row justify-between items-center">
                     <div className="text-gray-400 mb-4 md:mb-0">
-                      © 2024 CLOTHING SHOP. All rights reserved. Crafted with <i class="fa-solid fa-heart text-red-600"></i> for
+                      © 2024 CLOTHING SHOP. All rights reserved. Crafted with <i className="fa-solid fa-heart text-red-600"></i> for
                       fashion lovers
                     </div>
                     <div className="flex gap-8 text-gray-400">

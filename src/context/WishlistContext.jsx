@@ -98,9 +98,8 @@ export const WishlistProvider = ({ children }) => {
         timer: 2000,
         toast: true,
         background: '#fef7ff',
-        border: '1px solid #e9d5ff',
         customClass: {
-          popup: 'rounded-xl shadow-xl'
+          popup: 'rounded-xl shadow-xl border border-purple-200'
         }
       });
       return; // Don't add duplicate
@@ -129,9 +128,8 @@ export const WishlistProvider = ({ children }) => {
       timer: 2000,
       toast: true,
       background: '#fef7ff',
-      border: '1px solid #e9d5ff',
       customClass: {
-        popup: 'rounded-xl shadow-xl'
+        popup: 'rounded-xl shadow-xl border border-purple-200'
       }
     });
   };
@@ -163,9 +161,8 @@ export const WishlistProvider = ({ children }) => {
         timer: 2000,
         toast: true,
         background: '#fef7ff',
-        border: '1px solid #e9d5ff',
         customClass: {
-          popup: 'rounded-xl shadow-xl'
+          popup: 'rounded-xl shadow-xl border border-purple-200'
         }
       });
     }

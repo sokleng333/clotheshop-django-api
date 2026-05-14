@@ -4,6 +4,26 @@ import Swal from 'sweetalert2';
 // Cart Context
 const CartContext = createContext();
 
+const getTextValue = (value, fallback = '') => {
+  if (typeof value === 'string' || typeof value === 'number') {
+    return String(value);
+  }
+
+  if (value && typeof value === 'object') {
+    return value.name || value.title || fallback;
+  }
+
+  return fallback;
+};
+
+const normalizeCartProduct = (product) => ({
+  ...product,
+  name: getTextValue(product.name || product.title, 'Product'),
+  category: getTextValue(product.category, 'uncategorized'),
+  price: Number(product.price) || 0,
+  size: product.size || 'M',
+});
+
 // Cart Reducer
 const cartReducer = (state, action) => {
   switch (action.type) {
@@ -81,11 +101,12 @@ export const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
 
   const addToCart = (product) => {
+    const cartProduct = normalizeCartProduct(product);
     const existingItem = state.items.find(item => 
-      item.id === product.id && item.size === product.size
+      item.id === cartProduct.id && item.size === cartProduct.size
     );
     
-    dispatch({ type: 'ADD_TO_CART', payload: product });
+    dispatch({ type: 'ADD_TO_CART', payload: cartProduct });
     
     // Show toast alert on the right
     if (existingItem) {
@@ -93,10 +114,10 @@ export const CartProvider = ({ children }) => {
         title: 'Added to Cart!',
         html: `
           <div class="flex items-center gap-3">
-            <img src="${product.image}" alt="${product.name}" class="w-10 h-10 rounded-lg object-cover">
+            <img src="${cartProduct.image}" alt="${cartProduct.name}" class="w-10 h-10 rounded-lg object-cover">
             <div class="text-left">
-              <p class="font-semibold text-gray-800">${product.name}</p>
-              <p class="text-sm text-gray-600">Size: ${product.size} • Quantity updated</p>
+              <p class="font-semibold text-gray-800">${cartProduct.name}</p>
+              <p class="text-sm text-gray-600">Size: ${cartProduct.size} • Quantity updated</p>
             </div>
           </div>
         `,
@@ -106,9 +127,8 @@ export const CartProvider = ({ children }) => {
         timer: 2000,
         toast: true,
         background: '#f8fafc',
-        border: '1px solid #e2e8f0',
         customClass: {
-          popup: 'rounded-xl shadow-xl'
+          popup: 'rounded-xl shadow-xl border border-slate-200'
         }
       });
     } else {
@@ -116,10 +136,10 @@ export const CartProvider = ({ children }) => {
         title: 'Added to Cart!',
         html: `
           <div class="flex items-center gap-3">
-            <img src="${product.image}" alt="${product.name}" class="w-10 h-10 rounded-lg object-cover">
+            <img src="${cartProduct.image}" alt="${cartProduct.name}" class="w-10 h-10 rounded-lg object-cover">
             <div class="text-left">
-              <p class="font-semibold text-gray-800">${product.name}</p>
-              <p class="text-sm text-gray-600">Size: ${product.size} • Added to cart</p>
+              <p class="font-semibold text-gray-800">${cartProduct.name}</p>
+              <p class="text-sm text-gray-600">Size: ${cartProduct.size} • Added to cart</p>
             </div>
           </div>
         `,
@@ -129,9 +149,8 @@ export const CartProvider = ({ children }) => {
         timer: 2000,
         toast: true,
         background: '#f8fafc',
-        border: '1px solid #e2e8f0',
         customClass: {
-          popup: 'rounded-xl shadow-xl'
+          popup: 'rounded-xl shadow-xl border border-slate-200'
         }
       });
     }
@@ -163,9 +182,8 @@ export const CartProvider = ({ children }) => {
         timer: 2000,
         toast: true,
         background: '#fef2f2',
-        border: '1px solid #fecaca',
         customClass: {
-          popup: 'rounded-xl shadow-xl'
+          popup: 'rounded-xl shadow-xl border border-red-200'
         }
       });
     }
@@ -212,9 +230,8 @@ export const CartProvider = ({ children }) => {
         timer: 2000,
         toast: true,
         background: '#f0f9ff',
-        border: '1px solid #bae6fd',
         customClass: {
-          popup: 'rounded-xl shadow-xl'
+          popup: 'rounded-xl shadow-xl border border-sky-200'
         }
       });
     }
