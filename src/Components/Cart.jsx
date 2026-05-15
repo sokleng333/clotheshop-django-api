@@ -136,96 +136,152 @@ const Cart = () => {
 
   const continueShopping = () => navigate("/all-collections");
 
-  const proceedToCheckout = async () => {
-    // Check if user is logged in
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-        Swal.fire({
-            title: 'Login Required',
-            text: 'Please login to proceed to checkout',
-            icon: 'warning',
-            confirmButtonText: 'Login',
-            confirmButtonColor: '#2563eb',
-            showCancelButton: true,
-            cancelButtonText: 'Cancel',
-        }).then((result) => {
-            if (result.isConfirmed) navigate('/login');
-        });
-        return;
+ const proceedToCheckout = async () => {
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    Swal.fire({
+      title: "Login Required",
+      text: "Please login first",
+      icon: "warning",
+      confirmButtonText: "Login",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        navigate("/login");
+      }
+    });
+
+    return;
+  }
+
+  Swal.fire({
+    title: "Select Payment Method",
+    width: 700,
+    showCancelButton: true,
+    confirmButtonText: "Continue",
+    confirmButtonColor: "#2563eb",
+
+    html: `
+      <div style="display:flex;flex-direction:column;gap:15px;margin-top:20px;">
+
+        <label style="display:flex;align-items:center;gap:15px;padding:18px;border:2px solid #ddd;border-radius:15px;cursor:pointer;">
+          <input type="radio" name="payment" value="aba" checked />
+          <div>
+            <div style="font-weight:bold;font-size:18px;">ABA Bank</div>
+            <div style="color:gray;">Scan ABA QR</div>
+          </div>
+        </label>
+
+        <label style="display:flex;align-items:center;gap:15px;padding:18px;border:2px solid #ddd;border-radius:15px;cursor:pointer;">
+          <input type="radio" name="payment" value="acleda" />
+          <div>
+            <div style="font-weight:bold;font-size:18px;">ACLEDA</div>
+            <div style="color:gray;">Pay with ACLEDA App</div>
+          </div>
+        </label>
+
+        <label style="display:flex;align-items:center;gap:15px;padding:18px;border:2px solid #ddd;border-radius:15px;cursor:pointer;">
+          <input type="radio" name="payment" value="wing" />
+          <div>
+            <div style="font-weight:bold;font-size:18px;">Wing</div>
+            <div style="color:gray;">Wing Transfer</div>
+          </div>
+        </label>
+
+      </div>
+    `,
+  }).then(async (result) => {
+    if (!result.isConfirmed) return;
+
+    const selectedPayment = document.querySelector(
+      'input[name="payment"]:checked'
+    )?.value;
+
+    if (!selectedPayment) {
+      Swal.fire("Error", "Please select payment method", "error");
+      return;
     }
 
-    Swal.fire({
-        title: "Select Payment Method",
-        html: `...`, // keep your existing html
-        // ... keep all your existing Swal options
-    }).then(async (result) => {
-        if (result.isConfirmed) {
-            const selectedPayment = document.querySelector('input[name="payment"]:checked').value;
+    try {
+      // STEP 1 → ADD CART ITEMS
+      for (const item of cartItems) {
+        await fetch("http://127.0.0.1:8000/api/cart/add/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            product_id: item.id,
+            quantity: item.quantity,
+            size: item.size,
+          }),
+        });
+      }
 
-            // ✅ Step 1 - Send cart to Django checkout
-            try {
-                // First add all cart items to Django cart
-                for (const item of cartItems) {
-                    await fetch('http://127.0.0.1:8000/api/cart/add/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            product_id: item.id,
-                            size: item.size,
-                            quantity: item.quantity
-                        })
-                    });
-                }
-
-                // ✅ Step 2 - Checkout (creates order)
-                const checkoutRes = await fetch('http://127.0.0.1:8000/api/checkout/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const checkoutData = await checkoutRes.json();
-
-                if (!checkoutRes.ok) {
-                    Swal.fire('Error', checkoutData.error || 'Checkout failed', 'error');
-                    return;
-                }
-
-                const orderId = checkoutData.order_id;
-
-                // ✅ Step 3 - Create payment
-                const paymentRes = await fetch('http://127.0.0.1:8000/api/payment/create/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        order_id: orderId,
-                        method: selectedPayment
-                    })
-                });
-
-                const paymentData = await paymentRes.json();
-                const paymentId = paymentData.payment_id;
-
-                // ✅ Store for later confirmation
-                localStorage.setItem('pending_payment_id', paymentId);
-                localStorage.setItem('pending_order_id', orderId);
-
-                // Show bank payment UI
-                showBankPayment(selectedPayment);
-
-            } catch (err) {
-                Swal.fire('Error', 'Cannot connect to server', 'error');
-            }
+      // STEP 2 → CHECKOUT
+      const checkoutRes = await fetch(
+        "http://127.0.0.1:8000/api/checkout/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
-    });
+      );
+
+      const checkoutData = await checkoutRes.json();
+
+      if (!checkoutRes.ok) {
+        Swal.fire(
+          "Error",
+          checkoutData.error || "Checkout failed",
+          "error"
+        );
+        return;
+      }
+
+      // STEP 3 → CREATE PAYMENT
+      const paymentRes = await fetch(
+        "http://127.0.0.1:8000/api/payment/create/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            order_id: checkoutData.order_id,
+            method: selectedPayment,
+          }),
+        }
+      );
+
+      const paymentData = await paymentRes.json();
+
+      if (!paymentRes.ok) {
+        Swal.fire("Error", "Payment creation failed", "error");
+        return;
+      }
+
+      localStorage.setItem(
+        "pending_payment_id",
+        paymentData.payment_id
+      );
+
+      showBankPayment(selectedPayment);
+
+    } catch (error) {
+      console.error(error);
+
+      Swal.fire(
+        "Server Error",
+        "Cannot connect to backend",
+        "error"
+      );
+    }
+  });
 };
 
   const showBankPayment = (bankType) => {
@@ -286,42 +342,58 @@ const Cart = () => {
   };
 
  const verifyPayment = async (bankType) => {
-    Swal.fire({
-        title: "Processing Payment",
-        showConfirmButton: false,
-        allowOutsideClick: false,
-        timer: 2500,
-        timerProgressBar: true,
-        didOpen: () => Swal.showLoading(),
-    }).then(async () => {
-        const token = localStorage.getItem('access_token');
-        const paymentId = localStorage.getItem('pending_payment_id');
+  const token = localStorage.getItem("access_token");
+  const paymentId = localStorage.getItem("pending_payment_id");
 
-        try {
-            // ✅ Confirm payment in Django
-            const confirmRes = await fetch('http://127.0.0.1:8000/api/payment/confirm/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ payment_id: paymentId })
-            });
+  Swal.fire({
+    title: "Verifying Payment...",
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    },
+  });
 
-            const confirmData = await confirmRes.json();
+  try {
+    const response = await fetch(
+      "http://127.0.0.1:8000/api/payment/confirm/",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          payment_id: paymentId,
+        }),
+      }
+    );
 
-            if (confirmRes.ok) {
-                // Clear pending
-                localStorage.removeItem('pending_payment_id');
-                localStorage.removeItem('pending_order_id');
-                showPaymentSuccess(bankType);
-            } else {
-                Swal.fire('Error', confirmData.error || 'Payment failed', 'error');
-            }
-        } catch (err) {
-            Swal.fire('Error', 'Cannot connect to server', 'error');
-        }
-    });
+    const data = await response.json();
+
+    if (response.ok) {
+      Swal.close();
+
+      localStorage.removeItem("pending_payment_id");
+
+      showPaymentSuccess(bankType);
+
+    } else {
+      Swal.fire(
+        "Payment Failed",
+        data.error || "Verification failed",
+        "error"
+      );
+    }
+
+  } catch (err) {
+    console.error(err);
+
+    Swal.fire(
+      "Server Error",
+      "Cannot verify payment",
+      "error"
+    );
+  }
 };
 
   const showPaymentSuccess = (paymentMethod) => {
