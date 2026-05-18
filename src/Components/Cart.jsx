@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Acleda from "../assets/image.png";
+import wing from "../assets/wing-qr.png";
+import ABA from "../assets/ABA.jpg";
 import {
   FaPlus,
   FaMinus,
@@ -67,7 +70,7 @@ const Cart = () => {
       name: "ABA Bank",
       accountName: "FASHION STORE CO., LTD",
       accountNumber: "123 456 789",
-      qrCode: `https://i.pinimg.com/736x/81/58/84/8158842fe3e81efce11db9336498f7ef.jpg`,
+      qrCode: ABA,
       color: "from-blue-500 to-blue-600",
       icon: "🏦",
       instructions: [
@@ -82,7 +85,7 @@ const Cart = () => {
       name: "ACLEDA Bank",
       accountName: "FASHION STORE CO., LTD",
       accountNumber: "987 654 321",
-      qrCode: `/image/qr-code/ac-qr.png`,
+      qrCode: Acleda,
       color: "from-green-500 to-green-600",
       icon: "🏦",
       instructions: [
@@ -97,7 +100,7 @@ const Cart = () => {
       name: "Wing",
       accountName: "FASHION STORE",
       accountNumber: "012 345 678",
-      qrCode: `/image/qr-code/wing-qr.png`,
+      qrCode: wing,
       color: "from-orange-500 to-orange-600",
       icon: "💸",
       instructions: [
@@ -312,8 +315,8 @@ const Cart = () => {
           <div style="background-color: white; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); display: inline-block; border: 2px solid #f3f4f6;">
             <img src="${
               bank.qrCode
-            }" alt="QR Code" style="width: 18rem; height: 18rem; border-radius: 0.5rem;"/>
-          </div>
+            }" alt="QR Code" style="width: 18rem; height: 20rem; border-radius: 0.5rem;"/>
+           </div>
           <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
             <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
